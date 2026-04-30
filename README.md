@@ -75,8 +75,8 @@ This repo includes Raycast Script Commands in `raycast/`:
 
 ```txt
 raycast/
-  display-remote.sh
-  display-restore.sh
+  raycast-display-remote.sh
+  raycast-display-restore.sh
 ```
 
 To use them:
@@ -127,11 +127,9 @@ You can also pass an explicit layout path:
 - `scripts/capture-layout.sh`: saves the current `displayplacer` command.
 - `scripts/display-remote.sh`: applies `layouts/remote.displayplacer`.
 - `scripts/display-restore.sh`: applies `layouts/local.displayplacer`.
-- `scripts/go-remote.sh`: compatibility wrapper for `display-remote.sh`.
-- `scripts/restore-local.sh`: compatibility wrapper for `display-restore.sh`.
 - `scripts/install.sh`: checks dependencies and marks scripts executable.
-- `raycast/display-remote.sh`: Raycast command for the remote layout.
-- `raycast/display-restore.sh`: Raycast command for restoring the local layout.
+- `raycast/raycast-display-remote.sh`: Raycast command for the remote layout.
+- `raycast/raycast-display-restore.sh`: Raycast command for restoring the local layout.
 - `layouts/*.example`: placeholders showing the expected file format.
 - `layouts/*.displayplacer`: local captured display layouts, ignored by Git.
 - `raycast-local/`: optional local Raycast command names, ignored by Git.

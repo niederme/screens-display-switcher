@@ -1,8 +1,8 @@
 # screens-display-switcher
 
-Manual macOS display layout switching for Screens.app/VNC workflows, with
-optional launchers for Raycast, Keyboard Maestro, and any other tool that can
-run a shell script.
+Manual macOS display layout and resolution switching for Screens.app/VNC
+workflows, with optional launchers for Raycast, Keyboard Maestro, and any other
+tool that can run a shell script.
 
 The default setup is:
 

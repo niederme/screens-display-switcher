@@ -1,6 +1,7 @@
 # screens-display-switcher
 
-Manual macOS display layout switching for a Screens.app/VNC workflow.
+Raycast commands for manually switching macOS display layouts in a
+Screens.app/VNC workflow.
 
 The default setup is:
 
@@ -100,6 +101,31 @@ You can assign hotkeys to either command from Raycast Preferences.
 
 The Raycast commands are thin wrappers around `scripts/display-remote.sh` and
 `scripts/display-restore.sh`, so capture and edit layouts in the same place.
+
+## Keyboard Maestro
+
+Keyboard Maestro can run the same shell scripts directly.
+
+Create a macro for the remote layout:
+
+```txt
+Macro: Display Remote
+Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
+Action: Execute Shell Script
+Script: /Users/niederme/~Repos/screens-display-switcher/scripts/display-remote.sh
+```
+
+Create a second macro for restoring the local layout:
+
+```txt
+Macro: Display Restore
+Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
+Action: Execute Shell Script
+Script: /Users/niederme/~Repos/screens-display-switcher/scripts/display-restore.sh
+```
+
+Raycast and Keyboard Maestro both call the same scripts, so the captured layout
+files stay in one place.
 
 ### Custom Raycast Names
 

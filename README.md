@@ -80,8 +80,8 @@ To use them:
 4. Search Raycast for:
 
 ```txt
-Display: Go Remote
-Display: Restore Local
+Display: 1600
+Display: 3200
 ```
 
 You can assign hotkeys to either command from Raycast Preferences.
@@ -102,8 +102,8 @@ You can also pass an explicit layout path:
 - `scripts/go-remote.sh`: applies `layouts/remote.displayplacer`.
 - `scripts/restore-local.sh`: applies `layouts/local.displayplacer`.
 - `scripts/install.sh`: checks dependencies and marks scripts executable.
-- `raycast/display-go-remote.sh`: Raycast command for the remote layout.
-- `raycast/display-restore-local.sh`: Raycast command for the local layout.
+- `raycast/display-go-remote.sh`: Raycast command for the 1600 remote layout.
+- `raycast/display-restore-local.sh`: Raycast command for the 3200 local layout.
 - `layouts/*.example`: placeholders showing the expected file format.
 
 ## Notes

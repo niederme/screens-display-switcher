@@ -135,20 +135,6 @@ repo.
 Raycast and Keyboard Maestro both call the same scripts, so the captured layout
 files stay in one place.
 
-### Custom Raycast Names
-
-If you want machine-specific names like `Display 1600` and `Display 3200`,
-copy the Raycast commands into a local ignored folder:
-
-```sh
-mkdir -p raycast-local
-cp raycast/*.sh raycast-local/
-```
-
-Then edit the `@raycast.title` and `@raycast.description` lines in
-`raycast-local/*.sh`, and add `raycast-local` as the Script Commands directory
-in Raycast instead of `raycast`.
-
 You can also pass an explicit layout path:
 
 ```sh
@@ -166,7 +152,6 @@ You can also pass an explicit layout path:
 - `raycast/raycast-display-restore.sh`: Raycast command for restoring the local layout.
 - `layouts/*.example`: placeholders showing the expected file format.
 - `layouts/*.displayplacer`: local captured display layouts, ignored by Git.
-- `raycast-local/`: optional local Raycast command names, ignored by Git.
 
 ## Notes
 

@@ -4,6 +4,8 @@ Manual macOS display layout and resolution switching for Screens.app/VNC
 workflows, with optional launchers for Raycast, Keyboard Maestro, and any other
 tool that can run a shell script.
 
+![Display Remote command in Raycast](assets/raycast-display-remote.png)
+
 The default setup is:
 
 - `Display Remote`: remote-friendly layout for Screens.app.

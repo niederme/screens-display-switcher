@@ -2,12 +2,17 @@
 
 Manual macOS display layout switching for a Screens.app/VNC workflow.
 
+The intended setup is:
+
+- `Display: 1600`: remote-friendly layout for connecting from a 13-inch MacBook Air.
+- `Display: 3200`: normal local Studio Display layout.
+
 This utility deliberately does not try to detect VNC or Screens.app connection
 state. The reliable workflow is explicit:
 
-1. Run `scripts/go-remote.sh`.
+1. Run `Display: 1600` from Raycast.
 2. Connect with Screens.app.
-3. Run `scripts/restore-local.sh` when done.
+3. Run `Display: 3200` from Raycast when done.
 
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
 under the hood. Install it with Homebrew:
@@ -24,13 +29,13 @@ From this directory:
 ./scripts/install.sh
 ```
 
-Capture your normal local display layout:
+Set the Studio Display to your normal local layout, then capture it:
 
 ```sh
 ./scripts/capture-layout.sh local
 ```
 
-Arrange your displays for remote access, then capture the remote layout:
+Set the Studio Display to your Screens remote layout, then capture it:
 
 ```sh
 ./scripts/capture-layout.sh remote
@@ -45,15 +50,22 @@ layouts/remote.displayplacer
 
 ## Use
 
-Before connecting remotely:
+Before connecting remotely, use Raycast:
+
+```txt
+Display: 1600
+```
+
+After disconnecting and returning to the Mac locally, use Raycast:
+
+```txt
+Display: 3200
+```
+
+The equivalent shell commands are:
 
 ```sh
 ./scripts/go-remote.sh
-```
-
-After disconnecting and returning to the Mac locally:
-
-```sh
 ./scripts/restore-local.sh
 ```
 
@@ -105,6 +117,7 @@ You can also pass an explicit layout path:
 - `raycast/display-go-remote.sh`: Raycast command for the 1600 remote layout.
 - `raycast/display-restore-local.sh`: Raycast command for the 3200 local layout.
 - `layouts/*.example`: placeholders showing the expected file format.
+- `layouts/*.displayplacer`: local captured display layouts, ignored by Git.
 
 ## Notes
 

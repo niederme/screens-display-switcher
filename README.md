@@ -1,7 +1,8 @@
 # screens-display-switcher
 
-Raycast commands for manually switching macOS display layouts in a
-Screens.app/VNC workflow.
+Manual macOS display layout switching for Screens.app/VNC workflows, with
+optional launchers for Raycast, Keyboard Maestro, and any other tool that can
+run a shell script.
 
 The default setup is:
 
@@ -11,9 +12,9 @@ The default setup is:
 This utility deliberately does not try to detect VNC or Screens.app connection
 state. The reliable workflow is explicit:
 
-1. Run `Display Remote` from Raycast.
+1. Run `Display Remote`, or run `scripts/display-remote.sh`.
 2. Connect with Screens.app.
-3. Run `Display Restore` from Raycast when done.
+3. Run `Display Restore`, or run `scripts/display-restore.sh`, when done.
 
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
 under the hood. Install it with Homebrew:
@@ -30,13 +31,14 @@ From this directory:
 ./scripts/install.sh
 ```
 
-Set the Studio Display to your normal local layout, then capture it:
+Set your display to its normal local layout, then capture it:
 
 ```sh
 ./scripts/capture-layout.sh local
 ```
 
-Set the Studio Display to your Screens remote layout, then capture it:
+Set your display to the layout you want for Screens remote access, then capture
+it:
 
 ```sh
 ./scripts/capture-layout.sh remote
@@ -51,22 +53,25 @@ layouts/remote.displayplacer
 
 ## Use
 
-Before connecting remotely, use Raycast:
+Before connecting remotely, run the remote layout:
 
 ```txt
 Display Remote
 ```
 
-After disconnecting and returning to the Mac locally, use Raycast:
+Or from the shell:
+
+```sh
+./scripts/display-remote.sh
+```
+
+After disconnecting and returning to the Mac locally, restore the local layout:
 
 ```txt
 Display Restore
 ```
 
-The equivalent shell commands are:
-
 ```sh
-./scripts/display-remote.sh
 ./scripts/display-restore.sh
 ```
 
@@ -87,7 +92,7 @@ To use them:
 3. Add this folder as a script directory:
 
 ```txt
-/Users/niederme/~Repos/screens-display-switcher/raycast
+/path/to/screens-display-switcher/raycast
 ```
 
 4. Search Raycast for:
@@ -112,7 +117,7 @@ Create a macro for the remote layout:
 Macro: Display Remote
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
-Script: /Users/niederme/~Repos/screens-display-switcher/scripts/display-remote.sh
+Script: /path/to/screens-display-switcher/scripts/display-remote.sh
 ```
 
 Create a second macro for restoring the local layout:
@@ -121,8 +126,11 @@ Create a second macro for restoring the local layout:
 Macro: Display Restore
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
-Script: /Users/niederme/~Repos/screens-display-switcher/scripts/display-restore.sh
+Script: /path/to/screens-display-switcher/scripts/display-restore.sh
 ```
+
+Replace `/path/to/screens-display-switcher` with the path where you cloned this
+repo.
 
 Raycast and Keyboard Maestro both call the same scripts, so the captured layout
 files stay in one place.

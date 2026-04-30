@@ -65,8 +65,8 @@ Display: 3200
 The equivalent shell commands are:
 
 ```sh
-./scripts/go-remote.sh
-./scripts/restore-local.sh
+./scripts/display-remote.sh
+./scripts/display-restore.sh
 ```
 
 ## Raycast
@@ -98,21 +98,23 @@ Display: 3200
 
 You can assign hotkeys to either command from Raycast Preferences.
 
-The Raycast commands are thin wrappers around `scripts/go-remote.sh` and
-`scripts/restore-local.sh`, so capture and edit layouts in the same place.
+The Raycast commands are thin wrappers around `scripts/display-remote.sh` and
+`scripts/display-restore.sh`, so capture and edit layouts in the same place.
 
 You can also pass an explicit layout path:
 
 ```sh
-./scripts/go-remote.sh layouts/some-other-remote.displayplacer
-./scripts/restore-local.sh layouts/some-other-local.displayplacer
+./scripts/display-remote.sh layouts/some-other-remote.displayplacer
+./scripts/display-restore.sh layouts/some-other-local.displayplacer
 ```
 
 ## Files
 
 - `scripts/capture-layout.sh`: saves the current `displayplacer` command.
-- `scripts/go-remote.sh`: applies `layouts/remote.displayplacer`.
-- `scripts/restore-local.sh`: applies `layouts/local.displayplacer`.
+- `scripts/display-remote.sh`: applies `layouts/remote.displayplacer`.
+- `scripts/display-restore.sh`: applies `layouts/local.displayplacer`.
+- `scripts/go-remote.sh`: compatibility wrapper for `display-remote.sh`.
+- `scripts/restore-local.sh`: compatibility wrapper for `display-restore.sh`.
 - `scripts/install.sh`: checks dependencies and marks scripts executable.
 - `raycast/display-go-remote.sh`: Raycast command for the 1600 remote layout.
 - `raycast/display-restore-local.sh`: Raycast command for the 3200 local layout.

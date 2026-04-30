@@ -57,9 +57,9 @@ require_displayplacer
 output_path="$(resolve_output_path "$1")"
 mkdir -p "$(dirname "$output_path")"
 
-apply_script="go-remote.sh"
+apply_script="display-remote.sh"
 if [[ "$1" == "local" ]]; then
-  apply_script="restore-local.sh"
+  apply_script="display-restore.sh"
 fi
 
 command_line="$(

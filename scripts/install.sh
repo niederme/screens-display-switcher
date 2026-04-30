@@ -84,6 +84,6 @@ Setup checked.
 Next:
   ./scripts/capture-layout.sh local
   ./scripts/capture-layout.sh remote
-  ./scripts/go-remote.sh
-  ./scripts/restore-local.sh
+  ./scripts/display-remote.sh
+  ./scripts/display-restore.sh
 EOF

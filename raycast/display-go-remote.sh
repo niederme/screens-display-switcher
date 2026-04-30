@@ -2,13 +2,13 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Display: 1600
+# @raycast.title display remote
 # @raycast.mode compact
 
 # Optional parameters:
 # @raycast.icon 🖥️
 # @raycast.packageName Screens Display Switcher
-# @raycast.description Apply the 1600 remote display layout for Screens.app/VNC.
+# @raycast.description Apply the remote display layout for Screens.app/VNC.
 
 set -euo pipefail
 

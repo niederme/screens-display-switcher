@@ -2,17 +2,17 @@
 
 Manual macOS display layout switching for a Screens.app/VNC workflow.
 
-The intended setup is:
+The default setup is:
 
-- `Display: 1600`: remote-friendly layout for connecting from a 13-inch MacBook Air.
-- `Display: 3200`: normal local Studio Display layout.
+- `display remote`: remote-friendly layout for Screens.app.
+- `display restore`: normal local display layout.
 
 This utility deliberately does not try to detect VNC or Screens.app connection
 state. The reliable workflow is explicit:
 
-1. Run `Display: 1600` from Raycast.
+1. Run `display remote` from Raycast.
 2. Connect with Screens.app.
-3. Run `Display: 3200` from Raycast when done.
+3. Run `display restore` from Raycast when done.
 
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
 under the hood. Install it with Homebrew:
@@ -53,13 +53,13 @@ layouts/remote.displayplacer
 Before connecting remotely, use Raycast:
 
 ```txt
-Display: 1600
+display remote
 ```
 
 After disconnecting and returning to the Mac locally, use Raycast:
 
 ```txt
-Display: 3200
+display restore
 ```
 
 The equivalent shell commands are:
@@ -92,14 +92,28 @@ To use them:
 4. Search Raycast for:
 
 ```txt
-Display: 1600
-Display: 3200
+display remote
+display restore
 ```
 
 You can assign hotkeys to either command from Raycast Preferences.
 
 The Raycast commands are thin wrappers around `scripts/display-remote.sh` and
 `scripts/display-restore.sh`, so capture and edit layouts in the same place.
+
+### Custom Raycast Names
+
+If you want machine-specific names like `Display: 1600` and `Display: 3200`,
+copy the Raycast commands into a local ignored folder:
+
+```sh
+mkdir -p raycast-local
+cp raycast/*.sh raycast-local/
+```
+
+Then edit the `@raycast.title` and `@raycast.description` lines in
+`raycast-local/*.sh`, and add `raycast-local` as the Script Commands directory
+in Raycast instead of `raycast`.
 
 You can also pass an explicit layout path:
 
@@ -116,10 +130,11 @@ You can also pass an explicit layout path:
 - `scripts/go-remote.sh`: compatibility wrapper for `display-remote.sh`.
 - `scripts/restore-local.sh`: compatibility wrapper for `display-restore.sh`.
 - `scripts/install.sh`: checks dependencies and marks scripts executable.
-- `raycast/display-go-remote.sh`: Raycast command for the 1600 remote layout.
-- `raycast/display-restore-local.sh`: Raycast command for the 3200 local layout.
+- `raycast/display-go-remote.sh`: Raycast command for the remote layout.
+- `raycast/display-restore-local.sh`: Raycast command for restoring the local layout.
 - `layouts/*.example`: placeholders showing the expected file format.
 - `layouts/*.displayplacer`: local captured display layouts, ignored by Git.
+- `raycast-local/`: optional local Raycast command names, ignored by Git.
 
 ## Notes
 

@@ -2,13 +2,13 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Display: 3200
+# @raycast.title display restore
 # @raycast.mode compact
 
 # Optional parameters:
 # @raycast.icon 🖥️
 # @raycast.packageName Screens Display Switcher
-# @raycast.description Apply the 3200 local display layout.
+# @raycast.description Restore the local display layout.
 
 set -euo pipefail
 

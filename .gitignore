@@ -1,2 +1,3 @@
 layouts/*.displayplacer
 !layouts/*.displayplacer.example
+raycast-local/

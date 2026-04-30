@@ -6,8 +6,8 @@ launchers for Raycast, Keyboard Maestro, and any other tool that can run a
 shell script.
 
 ![Display Remote command in Raycast](assets/raycast-display-remote.png)
-*Example: launching the remote display layout from Raycast.*
 
+*Example: launching the remote display layout from Raycast.*
 
 The default setup is:
 

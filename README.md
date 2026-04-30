@@ -5,7 +5,10 @@ Manual macOS display layout and resolution switching for
 launchers for Raycast, Keyboard Maestro, and any other tool that can run a
 shell script.
 
-![Display Remote command in Raycast](assets/raycast-display-remote.png)
+<figure>
+  <img src="assets/raycast-display-remote.png" alt="Display Remote command in Raycast">
+  <figcaption>Example: launching the remote display layout from Raycast.</figcaption>
+</figure>
 
 The default setup is:
 

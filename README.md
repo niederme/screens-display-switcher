@@ -167,6 +167,46 @@ file. Layout files are plain text so you can inspect or edit them.
 The switch scripts refuse to run `.example` files or placeholder commands. This
 is intentional: capture real layouts first.
 
+## Troubleshooting
+
+### Remote and local layouts are identical
+
+If the switch scripts report that remote and local layouts are identical, both
+captured layout files contain the same `displayplacer` command. Running the
+switch would not change the display, so the scripts stop instead of silently
+doing nothing.
+
+Set the display to the layout you want, then recapture the matching side:
+
+```sh
+./scripts/capture-layout.sh remote
+```
+
+or:
+
+```sh
+./scripts/capture-layout.sh local
+```
+
+### `could not find res`
+
+If `displayplacer` reports that it `could not find res:<width>x<height>`, the
+requested mode is not available in the current macOS display context.
+
+This can happen if Screens/VNC changes the active display context. macOS may
+expose the display as a virtual device with a different or reduced mode list, so
+a layout captured in one context may not be available in another.
+
+Capture and apply each layout from the same kind of session whenever possible.
+If `displayplacer list` only shows one available mode, there may not be another
+mode for these scripts to switch to in that session.
+
+### Raycast cannot find `displayplacer`
+
+Raycast may launch scripts with a smaller `PATH` than your shell. The scripts
+prepend common Homebrew locations (`/opt/homebrew/bin` and `/usr/local/bin`) so
+Raycast can find `displayplacer` when it is installed by Homebrew.
+
 ## License
 
 MIT

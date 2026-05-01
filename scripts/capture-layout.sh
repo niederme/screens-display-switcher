@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 LAYOUTS_DIR="$ROOT_DIR/layouts"
@@ -58,8 +60,10 @@ output_path="$(resolve_output_path "$1")"
 mkdir -p "$(dirname "$output_path")"
 
 apply_script="display-remote.sh"
+counterpart_path="$LAYOUTS_DIR/local.displayplacer"
 if [[ "$1" == "local" ]]; then
   apply_script="display-restore.sh"
+  counterpart_path="$LAYOUTS_DIR/remote.displayplacer"
 fi
 
 command_line="$(
@@ -88,3 +92,24 @@ EOF
 } >"$output_path"
 
 printf 'Captured current layout to %s\n' "$output_path"
+
+if [[ "$1" == "local" || "$1" == "remote" ]]; then
+  counterpart_command="$(
+    if [[ -f "$counterpart_path" ]]; then
+      awk '
+        /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
+        /^displayplacer / { print; found = 1; exit }
+        END { if (!found) exit 1 }
+      ' "$counterpart_path"
+    fi
+  )" || counterpart_command=""
+
+  if [[ -n "$counterpart_command" && "$command_line" == "$counterpart_command" ]]; then
+    cat >&2 <<EOF
+Warning: captured $1 layout matches $counterpart_path.
+
+If remote and local layouts are identical, the switch scripts will refuse to run
+because they would not change the display.
+EOF
+  fi
+fi

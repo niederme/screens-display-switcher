@@ -11,7 +11,7 @@
 
 ## Working architecture (current)
 
-`D Remote` (run before connecting Screens):
+`d remote` (run before connecting Screens):
 
 1. Discard any existing BetterDisplay virtual screen matching the layout's
    `--virtualScreenName` (defensive — prevents stale duplicates from
@@ -29,13 +29,13 @@
 4. `displayplacer apply` the mirror layout, with the virtual display first
    in the mirror group so it becomes the master.
 
-`D Restore` (run after disconnecting Screens):
+`d restore` (run after disconnecting Screens):
 
 1. `displayplacer apply` the local layout, which **keeps the virtual
    display enabled** but moves it to `origin:(-10000,0)` — far off-screen
    but still tracked by macOS and BetterDisplay.
 
-The next `D Remote` run starts with discard-and-create, so leftover state
+The next `d remote` run starts with discard-and-create, so leftover state
 from the prior run is cleaned up before any layout work.
 
 ## Why this shape, and not other things we tried
@@ -62,12 +62,12 @@ Screens.app uses plain VNC; it has no equivalent connect handshake. So the
 host has to have the right display configuration *already in place* before
 Screens connects, every time. We replicate Workbench's shape using a
 BetterDisplay virtual display, but the lifecycle is bound to the
-`D Remote` / `D Restore` script invocations rather than to the Screens
+`d remote` / `d restore` script invocations rather than to the Screens
 session.
 
 ## What didn't work (and why those approaches were abandoned)
 
-### Disabling ScreensRemote on `D Restore`
+### Disabling ScreensRemote on `d restore`
 
 The earliest design used `id:s313775617 enabled:false` in the local
 layout. Restore would disable the virtual; the next Remote would have to
@@ -91,11 +91,11 @@ not. Stop disconnecting and there's nothing to reconnect.
 
 ### Hot-plugging from inside an active Screens session
 
-`D Remote` runs *before* the Screens connection, not during. macOS curtain
+`d remote` runs *before* the Screens connection, not during. macOS curtain
 mode (a Screens privacy feature that blanks the host's local display)
 suppresses display reconfiguration commands while engaged — they queue and
 apply when curtain mode disengages. Engage curtain mode after running
-`D Remote`, not before.
+`d remote`, not before.
 
 ### Always-connected ScreensRemote with no discard/create
 

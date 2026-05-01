@@ -2,7 +2,7 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title D Remote
+# @raycast.title d remote
 # @raycast.mode compact
 
 # Optional parameters:

@@ -6,8 +6,8 @@ launchers for Raycast, Keyboard Maestro, and any other tool that can run a
 shell script.
 
 The host runs at its native resolution day-to-day. Before connecting via
-Screens.app, run `D Remote` to switch to a smaller, remote-friendly mirror
-layout. After disconnecting, run `D Restore` to return to the native local
+Screens.app, run `d remote` to switch to a smaller, remote-friendly mirror
+layout. After disconnecting, run `d restore` to return to the native local
 layout.
 
 ![Display Remote command in Raycast](assets/raycast-display-remote.png)
@@ -16,14 +16,14 @@ layout.
 
 The default setup is:
 
-- `D Remote`: remote-friendly mirror layout for Screens.app/VNC.
-- `D Restore`: normal local display layout.
+- `d remote`: remote-friendly mirror layout for Screens.app/VNC.
+- `d restore`: normal local display layout.
 
 The reliable workflow is explicit:
 
-1. Run `D Remote`, or run `scripts/display-remote.sh`.
+1. Run `d remote`, or run `scripts/display-remote.sh`.
 2. Connect with Screens.app.
-3. Run `D Restore`, or run `scripts/display-restore.sh`, when done.
+3. Run `d restore`, or run `scripts/display-restore.sh`, when done.
 
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
 under the hood, plus optional [BetterDisplay](https://github.com/waydabber/BetterDisplay)
@@ -72,7 +72,7 @@ below for the directives to add to `layouts/remote.displayplacer`.
 Before connecting remotely, run the remote layout:
 
 ```txt
-D Remote
+d remote
 ```
 
 Or from the shell:
@@ -84,7 +84,7 @@ Or from the shell:
 After disconnecting and returning to the Mac locally, restore the local layout:
 
 ```txt
-D Restore
+d restore
 ```
 
 ```sh
@@ -128,7 +128,7 @@ displayplacer "id:s1879776955 res:3200x1800 hz:60 color_depth:8 enabled:true sca
 Why off-screen instead of `enabled:false`: BetterDisplay's CLI for
 reconnecting a previously-disabled virtual display is unreliable, so disabling
 it on restore tends to produce the failure modes documented in
-[HANDOFF.md](HANDOFF.md). Each `D Remote` run discards and recreates the
+[HANDOFF.md](HANDOFF.md). Each `d remote` run discards and recreates the
 virtual cleanly, so accumulation isn't a concern.
 
 ## Raycast
@@ -154,8 +154,8 @@ To use them:
 4. Search Raycast for:
 
 ```txt
-D Remote
-D Restore
+d remote
+d restore
 ```
 
 You can assign hotkeys to either command from Raycast Preferences.
@@ -170,7 +170,7 @@ Keyboard Maestro can run the same shell scripts directly.
 Create a macro for the remote layout:
 
 ```txt
-Macro: D Remote
+Macro: d remote
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
 Script: /path/to/screens-display-switcher/scripts/display-remote.sh
@@ -179,7 +179,7 @@ Script: /path/to/screens-display-switcher/scripts/display-remote.sh
 Create a second macro for restoring the local layout:
 
 ```txt
-Macro: D Restore
+Macro: d restore
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
 Script: /path/to/screens-display-switcher/scripts/display-restore.sh
@@ -222,11 +222,11 @@ is intentional: capture real layouts first.
 
 ### Curtain mode (Screens.app privacy feature) suppresses display changes
 
-If you have curtain mode engaged when `D Remote` runs, the resolution change
+If you have curtain mode engaged when `d remote` runs, the resolution change
 will not take effect until curtain mode is disengaged. macOS appears to defer
 display reconfiguration while curtain mode is active.
 
-Workaround: run `D Remote` *before* engaging curtain mode (i.e. before
+Workaround: run `d remote` *before* engaging curtain mode (i.e. before
 connecting via Screens.app and before turning on curtain mode), not after.
 
 ### Apple Silicon: color depth is not configurable via BetterDisplay
@@ -271,14 +271,14 @@ mode for these scripts to switch to in that session.
 ### Stale or duplicate BetterDisplay virtual displays
 
 If you ever hit a state where multiple virtual displays with the same name
-exist in BetterDisplay, the next `D Remote` run cleans them up automatically:
+exist in BetterDisplay, the next `d remote` run cleans them up automatically:
 it issues `betterdisplaycli discard` against the layout's
 `--virtualScreenName` until none remain, then creates a fresh one.
 
 If something more fundamentally broken happens (BetterDisplay UI shows the
 virtual display but `betterdisplaycli` can't see it, etc.), open the
 BetterDisplay app, manually delete any leftover virtual screens, and re-run
-`D Remote`.
+`d remote`.
 
 ### Raycast cannot find `displayplacer`
 

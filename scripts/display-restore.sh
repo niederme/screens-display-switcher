@@ -84,6 +84,16 @@ EOF
     ;;
 esac
 
+current_command="$(displayplacer list | awk '/^displayplacer / { command = $0 } END { print command }')"
+if [[ -n "$current_command" && "$command_line" == "$current_command" ]]; then
+  cat <<EOF
+Already at requested local display layout.
+
+Layout: $layout_path
+EOF
+  exit 0
+fi
+
 if [[ "$layout_path" == "$DEFAULT_LAYOUT" && -f "$REMOTE_LAYOUT" ]]; then
   remote_command="$(read_layout_command "$REMOTE_LAYOUT" || true)"
   if [[ -n "$remote_command" && "$command_line" == "$remote_command" ]]; then
@@ -98,16 +108,6 @@ Running this would not change the display. Capture a distinct local layout:
 EOF
     exit 1
   fi
-fi
-
-current_command="$(displayplacer list | awk '/^displayplacer / { command = $0 } END { print command }')"
-if [[ -n "$current_command" && "$command_line" == "$current_command" ]]; then
-  cat <<EOF
-Already at requested local display layout.
-
-Layout: $layout_path
-EOF
-  exit 0
 fi
 
 printf 'Applying local display layout from %s\n' "$layout_path"

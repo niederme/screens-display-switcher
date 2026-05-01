@@ -114,6 +114,14 @@ printf 'Applying local display layout from %s\n' "$layout_path"
 if ! output="$(bash -c "$command_line" 2>&1)"; then
   printf '%s\n' "$output" >&2
 
+  if [[ "$command_line" == *"enabled:false"* && "$output" == *"Unable to find screen"* ]]; then
+    cat <<'EOF'
+
+One or more disabled displays were already missing. Treating restore as complete.
+EOF
+    exit 0
+  fi
+
   if [[ "$output" == *"could not find res:"* ]]; then
     cat >&2 <<'EOF'
 

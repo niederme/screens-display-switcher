@@ -5,6 +5,14 @@ Manual macOS display layout and resolution switching for
 launchers for Raycast, Keyboard Maestro, and any other tool that can run a
 shell script.
 
+> **Status / YMMV:** the basic `displayplacer` layout switcher works, but the
+> Screens + virtual-display workflow is still finicky. In particular,
+> dynamically creating or connecting a BetterDisplay virtual display during an
+> active Screens session has been unreliable. The current best lead is to keep a
+> BetterDisplay virtual display connected and use `displayplacer` only for
+> mirroring/resolution/layout changes. See [HANDOFF.md](HANDOFF.md) before
+> continuing that work.
+
 ![Display Remote command in Raycast](assets/raycast-display-remote.png)
 
 *Example: launching the remote display layout from Raycast.*

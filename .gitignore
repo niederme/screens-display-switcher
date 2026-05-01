@@ -1,2 +1,9 @@
 layouts/*.displayplacer
 !layouts/*.displayplacer.example
+
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Claude Code worktrees + agent state
+.claude/

@@ -5,13 +5,10 @@ Manual macOS display layout and resolution switching for
 launchers for Raycast, Keyboard Maestro, and any other tool that can run a
 shell script.
 
-> **Status / YMMV:** the basic `displayplacer` layout switcher works, but the
-> Screens + virtual-display workflow is still finicky. In particular,
-> dynamically creating or connecting a BetterDisplay virtual display during an
-> active Screens session has been unreliable. The current best lead is to keep a
-> BetterDisplay virtual display connected and use `displayplacer` only for
-> mirroring/resolution/layout changes. See [HANDOFF.md](HANDOFF.md) before
-> continuing that work.
+The host runs at its native resolution day-to-day. Before connecting via
+Screens.app, run `D Remote` to switch to a smaller, remote-friendly mirror
+layout. After disconnecting, run `D Restore` to return to the native local
+layout.
 
 ![Display Remote command in Raycast](assets/raycast-display-remote.png)
 
@@ -19,21 +16,22 @@ shell script.
 
 The default setup is:
 
-- `Display Remote`: remote-friendly layout for Screens.app.
-- `Display Restore`: normal local display layout.
+- `D Remote`: remote-friendly mirror layout for Screens.app/VNC.
+- `D Restore`: normal local display layout.
 
-This utility deliberately does not try to detect VNC or Screens.app connection
-state. The reliable workflow is explicit:
+The reliable workflow is explicit:
 
-1. Run `Display Remote`, or run `scripts/display-remote.sh`.
+1. Run `D Remote`, or run `scripts/display-remote.sh`.
 2. Connect with Screens.app.
-3. Run `Display Restore`, or run `scripts/display-restore.sh`, when done.
+3. Run `D Restore`, or run `scripts/display-restore.sh`, when done.
 
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
-under the hood. Install it with Homebrew:
+under the hood, plus optional [BetterDisplay](https://github.com/waydabber/BetterDisplay)
+support for layouts that involve a virtual display.
 
 ```sh
 brew install displayplacer
+brew install waydabber/betterdisplay/betterdisplaycli   # only if you use a virtual display
 ```
 
 ## Setup
@@ -64,12 +62,17 @@ layouts/local.displayplacer
 layouts/remote.displayplacer
 ```
 
+If your remote layout uses a BetterDisplay virtual display (recommended for
+Screens.app, since macOS otherwise streams the host's full physical display
+resolution), see [Using a BetterDisplay virtual display](#using-a-betterdisplay-virtual-display)
+below for the directives to add to `layouts/remote.displayplacer`.
+
 ## Use
 
 Before connecting remotely, run the remote layout:
 
 ```txt
-Display Remote
+D Remote
 ```
 
 Or from the shell:
@@ -81,12 +84,52 @@ Or from the shell:
 After disconnecting and returning to the Mac locally, restore the local layout:
 
 ```txt
-Display Restore
+D Restore
 ```
 
 ```sh
 ./scripts/display-restore.sh
 ```
+
+## Using a BetterDisplay virtual display
+
+For Screens.app workflows, the most useful pattern is to mirror the physical
+display to a smaller BetterDisplay virtual display. The virtual display
+becomes the mirror master at the smaller resolution, and Screens streams
+that. This is the same shape Astropad Workbench uses internally.
+
+Add two comment directives to `layouts/remote.displayplacer`:
+
+```txt
+# betterdisplay: connect-all-displays
+# betterdisplay-create: --type=VirtualScreen --virtualScreenName=ScreensRemote --virtualScreenSerial=313775617 --virtualScreenVendorNumber=2198 --virtualScreenModelNumber=10498 --aspectWidth=16 --aspectHeight=9 --resolutionList=1920x1080 --useResolutionList=on --virtualScreenHiDPI=on
+displayplacer "id:s313775617+s1879776955 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(0,0) degree:0"
+```
+
+When the `betterdisplay: connect-all-displays` directive is present,
+`display-remote.sh` will:
+
+1. Discard any existing BetterDisplay virtual screen matching
+   `--virtualScreenName` (defensive — prevents stale records from accumulating
+   across sessions).
+2. Run `betterdisplaycli create` with the arguments from
+   `betterdisplay-create:`.
+3. Connect the new virtual display via the BetterDisplay URL scheme (the CLI
+   form is sometimes unreliable).
+4. Apply the `displayplacer` mirror layout.
+
+The matching `layouts/local.displayplacer` should keep the virtual display
+**enabled** but parked off-screen, e.g.:
+
+```txt
+displayplacer "id:s1879776955 res:3200x1800 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" "id:s313775617 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(-10000,0) degree:0"
+```
+
+Why off-screen instead of `enabled:false`: BetterDisplay's CLI for
+reconnecting a previously-disabled virtual display is unreliable, so disabling
+it on restore tends to produce the failure modes documented in
+[HANDOFF.md](HANDOFF.md). Each `D Remote` run discards and recreates the
+virtual cleanly, so accumulation isn't a concern.
 
 ## Raycast
 
@@ -111,8 +154,8 @@ To use them:
 4. Search Raycast for:
 
 ```txt
-Display Remote
-Display Restore
+D Remote
+D Restore
 ```
 
 You can assign hotkeys to either command from Raycast Preferences.
@@ -127,7 +170,7 @@ Keyboard Maestro can run the same shell scripts directly.
 Create a macro for the remote layout:
 
 ```txt
-Macro: Display Remote
+Macro: D Remote
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
 Script: /path/to/screens-display-switcher/scripts/display-remote.sh
@@ -136,7 +179,7 @@ Script: /path/to/screens-display-switcher/scripts/display-remote.sh
 Create a second macro for restoring the local layout:
 
 ```txt
-Macro: Display Restore
+Macro: D Restore
 Trigger: your preferred hotkey, menu item, Stream Deck button, or typed string
 Action: Execute Shell Script
 Script: /path/to/screens-display-switcher/scripts/display-restore.sh
@@ -177,6 +220,22 @@ is intentional: capture real layouts first.
 
 ## Troubleshooting
 
+### Curtain mode (Screens.app privacy feature) suppresses display changes
+
+If you have curtain mode engaged when `D Remote` runs, the resolution change
+will not take effect until curtain mode is disengaged. macOS appears to defer
+display reconfiguration while curtain mode is active.
+
+Workaround: run `D Remote` *before* engaging curtain mode (i.e. before
+connecting via Screens.app and before turning on curtain mode), not after.
+
+### Apple Silicon: color depth is not configurable via BetterDisplay
+
+`betterdisplaycli` cannot set color depth on Apple Silicon Macs (per its own
+help text). Layouts in this repo use whatever color depth BetterDisplay assigns
+by default; the `color_depth:` token in displayplacer commands captures the
+value at capture time and replays it via macOS's regular display APIs.
+
 ### Remote and local layouts are identical
 
 If the switch scripts report that remote and local layouts are identical, both
@@ -208,6 +267,18 @@ a layout captured in one context may not be available in another.
 Capture and apply each layout from the same kind of session whenever possible.
 If `displayplacer list` only shows one available mode, there may not be another
 mode for these scripts to switch to in that session.
+
+### Stale or duplicate BetterDisplay virtual displays
+
+If you ever hit a state where multiple virtual displays with the same name
+exist in BetterDisplay, the next `D Remote` run cleans them up automatically:
+it issues `betterdisplaycli discard` against the layout's
+`--virtualScreenName` until none remain, then creates a fresh one.
+
+If something more fundamentally broken happens (BetterDisplay UI shows the
+virtual display but `betterdisplaycli` can't see it, etc.), open the
+BetterDisplay app, manually delete any leftover virtual screens, and re-run
+`D Remote`.
 
 ### Raycast cannot find `displayplacer`
 

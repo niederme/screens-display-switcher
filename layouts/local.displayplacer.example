@@ -1,4 +1,13 @@
 # Example local layout file.
+#
+# This is the layout `D Restore` applies (also known as `display-restore.sh`).
+# Goal: physical display is main at native resolution; any BetterDisplay virtual
+# display used by `D Remote` is parked off-screen but kept enabled.
+#
+# Why off-screen instead of `enabled:false`: disabling a BetterDisplay virtual
+# display works, but reconnecting it on the next `D Remote` run is unreliable.
+# Parking it far off-screen lets each cycle reuse the same record cleanly.
+#
 # Replace this by running:
 #   ../scripts/capture-layout.sh local
 #

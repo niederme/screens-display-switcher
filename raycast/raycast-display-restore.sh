@@ -2,7 +2,7 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Display Restore
+# @raycast.title D Restore
 # @raycast.mode compact
 
 # Optional parameters:

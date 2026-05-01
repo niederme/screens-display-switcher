@@ -1,34 +1,49 @@
 # Handoff: Screens + BetterDisplay Remote Display
 
-This repo started as a small manual `displayplacer` layout switcher for
-Screens/VNC workflows. The basic `displayplacer` approach works for normal
-layout switching, but the attempted BetterDisplay virtual-display workflow is
-not yet reliable enough to ship as the default behavior.
+> **Status (1.0):** the workflow described in [README.md](README.md) is
+> working end-to-end. This file is preserved as design history — the
+> failure modes documented below are what motivated the current
+> defensive-discard-then-create approach in `scripts/display-remote.sh`,
+> and the off-screen-park (rather than `enabled:false`) approach in
+> `layouts/local.displayplacer`. If you're integrating these scripts, read
+> the README first; this file explains *why* certain choices look the way
+> they do.
 
-## Current Conclusion
+## Working architecture (current)
 
-Do not hot-plug the BetterDisplay virtual display from the Raycast command.
+`D Remote` (run before connecting Screens):
 
-The most promising next direction is:
+1. Discard any existing BetterDisplay virtual screen matching the layout's
+   `--virtualScreenName` (defensive — prevents stale duplicates from
+   accumulating across sessions). Loops until `discard` reports nothing
+   left to discard.
+2. `betterdisplaycli create` a fresh virtual screen using the
+   `# betterdisplay-create:` directive's flags. Pin the resolution list with
+   `--resolutionList=<WxH> --useResolutionList=on` so the new virtual
+   defaults to the intended remote resolution rather than BetterDisplay's
+   multiplier-generated ladder.
+3. `betterdisplaycli perform --connectAllDisplays`, plus URL-scheme
+   `BetterDisplay://set?tagID=<id>&connected=on` per missing serial
+   (the CLI form `set --connected=on` is unreliable; URL scheme is
+   currently the working path).
+4. `displayplacer apply` the mirror layout, with the virtual display first
+   in the mirror group so it becomes the master.
 
-1. Keep one BetterDisplay virtual display named `ScreensRemote` connected.
-2. Use `displayplacer` to switch between local and remote layouts.
-3. Do not have `Display Restore` disable or discard `ScreensRemote`.
+`D Restore` (run after disconnecting Screens):
 
-In short:
+1. `displayplacer apply` the local layout, which **keeps the virtual
+   display enabled** but moves it to `origin:(-10000,0)` — far off-screen
+   but still tracked by macOS and BetterDisplay.
 
-```txt
-BetterDisplay: owns the persistent virtual screen.
-displayplacer: owns mirroring, main display, resolution, and arrangement.
-Raycast/Keyboard Maestro: only launch the scripts.
-```
+The next `D Remote` run starts with discard-and-create, so leftover state
+from the prior run is cleaned up before any layout work.
 
-## Why
+## Why this shape, and not other things we tried
 
 Astropad Workbench behaves well because it owns the entire remote-display
-lifecycle. When Workbench is connected, macOS sees an `Astropad Display` virtual
-display. Workbench makes that virtual display the main/mirror-master display and
-mirrors the Studio Display to it.
+lifecycle. When Workbench is connected, macOS sees an `Astropad Display`
+virtual display. Workbench makes that virtual display the main /
+mirror-master and mirrors the physical display to it.
 
 Observed Workbench shape:
 
@@ -43,105 +58,58 @@ Studio Display
   Mirror Status: Hardware Mirror
 ```
 
-The Screens + BetterDisplay approach was trying to imitate that from outside
-Screens. The unreliable part was asking BetterDisplay to connect/create the
-virtual display after Screens was already connected.
+Screens.app uses plain VNC; it has no equivalent connect handshake. So the
+host has to have the right display configuration *already in place* before
+Screens connects, every time. We replicate Workbench's shape using a
+BetterDisplay virtual display, but the lifecycle is bound to the
+`D Remote` / `D Restore` script invocations rather than to the Screens
+session.
 
-## What Failed
+## What didn't work (and why those approaches were abandoned)
 
-The following path was unreliable:
+### Disabling ScreensRemote on `D Restore`
 
-```txt
-Display Remote:
-  connect/create BetterDisplay virtual display
-  wait for macOS/displayplacer to see it
-  mirror ScreensRemote + Studio Display
+The earliest design used `id:s313775617 enabled:false` in the local
+layout. Restore would disable the virtual; the next Remote would have to
+reconnect or recreate it. This failed in practice:
 
-Display Restore:
-  restore Studio Display
-  disable ScreensRemote
-```
+- `betterdisplaycli set --connected=on` returned `Failed.` — the CLI's
+  `--connected=on` path is unreliable.
+- BetterDisplay URL commands sometimes connected the virtual display,
+  sometimes only changed BetterDisplay internal state without making it
+  visible to macOS.
+- BetterDisplay accumulated disconnected duplicate `ScreensRemote`
+  records across cycles.
+- Virtual display UUIDs changed across reconnects, so any saved UUID
+  became stale.
+- `displayplacer apply` could only succeed after macOS exposed the
+  virtual display, which the unreliable reconnect step couldn't
+  guarantee.
 
-Failure modes observed:
+The root insight: the disconnect path is reliable, the reconnect path is
+not. Stop disconnecting and there's nothing to reconnect.
 
-- `betterdisplaycli set --connected=on` returned `Failed`.
-- BetterDisplay URL commands sometimes connected the virtual display, sometimes
-  only changed BetterDisplay internal state.
-- BetterDisplay accumulated disconnected duplicate `ScreensRemote` records.
-- BetterDisplay virtual display UUIDs changed across reconnects.
-- `displayplacer` could only apply the mirror layout after macOS actually
-  exposed the virtual display.
-- Raycast failed on reconnect because `ScreensRemote` was not visible to
-  `displayplacer`.
+### Hot-plugging from inside an active Screens session
 
-This means the hot-plug lifecycle is the brittle part. `displayplacer` itself
-was reliable once the displays were present.
+`D Remote` runs *before* the Screens connection, not during. macOS curtain
+mode (a Screens privacy feature that blanks the host's local display)
+suppresses display reconfiguration commands while engaged — they queue and
+apply when curtain mode disengages. Engage curtain mode after running
+`D Remote`, not before.
 
-## Recommended Layout Model
+### Always-connected ScreensRemote with no discard/create
 
-Create and keep exactly one BetterDisplay virtual screen:
+We considered creating ScreensRemote once at setup and leaving it
+connected forever, with the scripts only toggling main/mirror/placement.
+The reliability story for "stays connected forever despite VNC sessions
+and BetterDisplay state changes" is uncertain. The current
+discard-and-create-on-Remote model gives a known-clean state for every
+Screens session, at the cost of one extra discard+create per Remote run
+(takes a couple of seconds).
 
-```txt
-Name: ScreensRemote
-Serial: 313775617
-Vendor: 2198
-Model: 10498
-Useful resolution: 1920x1080
-```
+## Inventory commands
 
-Use serial IDs in layout files rather than BetterDisplay UUIDs:
-
-```txt
-ScreensRemote: s313775617
-Studio Display: s1879776955
-```
-
-Recommended remote layout:
-
-```sh
-displayplacer "id:s313775617+s1879776955 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(0,0) degree:0"
-```
-
-This makes `ScreensRemote` the first display in the mirror group, which makes it
-the mirror master / optimized display.
-
-Recommended local layout should restore Studio Display without disabling
-`ScreensRemote`. A likely starting point is:
-
-```sh
-displayplacer "id:s1879776955 res:3200x1800 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" "id:s313775617 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(-1920,0) degree:0"
-```
-
-That keeps the virtual display available for the next remote switch. It may mean
-Screens shows more than one display choice, but it avoids the unreliable
-BetterDisplay connect/create step.
-
-## Current Branch Caveat
-
-At this handoff, the branch contains experimental script changes from the failed
-BetterDisplay hot-plug approach:
-
-```txt
-scripts/display-remote.sh
-scripts/display-restore.sh
-```
-
-Those changes should not be treated as the final design. The next pass should
-either revert them or replace them with the always-connected model above.
-
-Ignored local layout files were also edited during testing:
-
-```txt
-layouts/remote.displayplacer
-layouts/local.displayplacer
-```
-
-They are intentionally ignored by Git because each machine needs its own
-display IDs and preferred resolutions.
-
-## Useful Inventory Commands
-
-Use these before and after each experiment:
+Before and after experiments, these are useful:
 
 ```sh
 betterdisplaycli get -identifiers
@@ -149,35 +117,7 @@ displayplacer list
 system_profiler SPDisplaysDataType
 ```
 
-When cleaning up, only remove BetterDisplay virtual displays named
-`ScreensRemote`. Do not touch `Astropad`, `Workbench`, `Luna`, or the physical
-Studio Display.
-
-## Suggested Next Steps
-
-1. Clean BetterDisplay so there is exactly one `ScreensRemote` virtual display.
-2. Leave `ScreensRemote` connected.
-3. Recapture or hand-edit `layouts/remote.displayplacer` using the remote mirror
-   layout above.
-4. Recapture or hand-edit `layouts/local.displayplacer` so it restores Studio
-   Display without disabling `ScreensRemote`.
-5. Remove the experimental BetterDisplay connect/create logic from
-   `scripts/display-remote.sh`.
-6. Remove the experimental "missing disabled display means success" behavior
-   from `scripts/display-restore.sh` if restore no longer disables the virtual
-   display.
-7. Test the full workflow:
-
-```txt
-Display Restore
-disconnect Screens
-connect Screens
-Display Remote
-disconnect Screens
-Display Restore
-connect Screens again
-Display Remote
-```
-
-The expected outcome is that `Display Remote` never needs to ask BetterDisplay
-to create or connect a virtual display during an active Screens session.
+When cleaning up by hand, only remove BetterDisplay virtual displays
+matching the layout's `--virtualScreenName`. Do not touch unrelated
+virtual displays installed by other apps (Astropad, Workbench, Luna,
+etc.) or any physical displays.

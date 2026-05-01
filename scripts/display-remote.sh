@@ -186,35 +186,38 @@ EOF
     exit 127
   fi
 
+  create_args="$(layout_directive_value "$layout_path" "betterdisplay-create:")"
+
+  # Defensive: discard any existing virtual screen(s) matching the layout's
+  # create name. Prevents BetterDisplay from accumulating stale duplicates
+  # across sessions (each Screens cycle starts with a fresh virtual screen).
+  if [[ -n "$create_args" ]]; then
+    virtual_name="$(grep -oE -- '--virtualScreenName=[^ ]+' <<<"$create_args" | head -n1 | sed 's/--virtualScreenName=//')"
+    if [[ -n "$virtual_name" ]]; then
+      while betterdisplaycli discard --type=VirtualScreen --name="$virtual_name" >/dev/null 2>&1; do
+        sleep 0.5
+      done
+    fi
+  fi
+
+  if [[ -n "$create_args" ]]; then
+    # The create arguments come from the local layout file. They intentionally
+    # use shell-style argument splitting so BetterDisplay receives each flag.
+    # shellcheck disable=SC2086
+    betterdisplaycli create $create_args >/dev/null 2>&1 || true
+    sleep 1
+  fi
+
   betterdisplaycli perform --connectAllDisplays >/dev/null 2>&1 || true
   sleep 1
 
   current_list="$(displayplacer list)"
   if [[ -n "$(missing_serial_ids "$command_line" "$current_list")" ]]; then
-    create_args="$(layout_directive_value "$layout_path" "betterdisplay-create:")"
     while IFS= read -r serial_id; do
       [[ -z "$serial_id" ]] && continue
       connect_betterdisplay_virtual_serial "${serial_id#s}" || true
     done < <(missing_serial_ids "$command_line" "$current_list")
     sleep 2
-  fi
-
-  current_list="$(displayplacer list)"
-  if [[ -n "$(missing_serial_ids "$command_line" "$current_list")" ]]; then
-    create_args="$(layout_directive_value "$layout_path" "betterdisplay-create:")"
-
-    if [[ -n "$create_args" ]]; then
-      # The create arguments come from the local layout file. They intentionally
-      # use shell-style argument splitting so BetterDisplay receives each flag.
-      # shellcheck disable=SC2086
-      betterdisplaycli create $create_args >/dev/null 2>&1 || true
-      betterdisplaycli perform --connectAllDisplays >/dev/null 2>&1 || true
-      while IFS= read -r serial_id; do
-        [[ -z "$serial_id" ]] && continue
-        connect_betterdisplay_virtual_serial "${serial_id#s}" || true
-      done < <(missing_serial_ids "$command_line" "$(displayplacer list)")
-      sleep 1
-    fi
   fi
 
   if ! wait_for_layout_serials "$command_line"; then

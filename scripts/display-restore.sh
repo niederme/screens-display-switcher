@@ -16,6 +16,46 @@ read_layout_command() {
   ' "$1"
 }
 
+layout_has_directive() {
+  local layout_file="$1"
+  local directive="$2"
+
+  grep -Eiq "^[[:space:]]*#[[:space:]]*$directive([[:space:]]|$)" "$layout_file"
+}
+
+layout_directive_value() {
+  local layout_file="$1"
+  local directive="$2"
+
+  sed -n -E "s/^[[:space:]]*#[[:space:]]*$directive[[:space:]]*//Ip" "$layout_file" | head -n 1
+}
+
+# Discard a BetterDisplay virtual screen if the layout file has a
+# `# betterdisplay-discard: <args>` directive. Loops until discard reports
+# nothing left, so duplicate records are cleaned up in one pass. Quiet on
+# success; warns once if betterdisplaycli is missing.
+run_layout_discard() {
+  local layout_file="$1"
+  local discard_args
+  discard_args="$(layout_directive_value "$layout_file" "betterdisplay-discard:")"
+
+  [[ -z "$discard_args" ]] && return 0
+
+  if ! command -v betterdisplaycli >/dev/null 2>&1; then
+    cat >&2 <<'EOF'
+Warning: layout requests a BetterDisplay discard, but betterdisplaycli was not found.
+Skipping discard step. Install it with:
+  brew install waydabber/betterdisplay/betterdisplaycli
+EOF
+    return 0
+  fi
+
+  # shellcheck disable=SC2086
+  while betterdisplaycli discard $discard_args >/dev/null 2>&1; do
+    sleep 0.5
+  done
+}
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -91,6 +131,7 @@ Already at requested local display layout.
 
 Layout: $layout_path
 EOF
+  run_layout_discard "$layout_path"
   exit 0
 fi
 
@@ -129,3 +170,5 @@ EOF
 fi
 
 printf '%s\n' "$output"
+
+run_layout_discard "$layout_path"

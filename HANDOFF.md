@@ -3,8 +3,8 @@
 > **Status (1.0):** the workflow described in [README.md](README.md) is
 > working end-to-end. This file is preserved as design history — the
 > failure modes documented below are what motivated the current
-> defensive-discard-then-create approach in `scripts/display-remote.sh`,
-> and the off-screen-park (rather than `enabled:false`) approach in
+> discard-then-create approach in `scripts/display-remote.sh` and the
+> matching `betterdisplay-discard:` directive in
 > `layouts/local.displayplacer`. If you're integrating these scripts, read
 > the README first; this file explains *why* certain choices look the way
 > they do.
@@ -31,12 +31,16 @@
 
 `d restore` (run after disconnecting Screens):
 
-1. `displayplacer apply` the local layout, which **keeps the virtual
-   display enabled** but moves it to `origin:(-10000,0)` — far off-screen
-   but still tracked by macOS and BetterDisplay.
+1. `displayplacer apply` the local layout (just the physical display at
+   its native resolution).
+2. `betterdisplaycli discard` matching the `# betterdisplay-discard:`
+   directive in the local layout, looping until nothing is left to
+   discard. The virtual display goes away between sessions.
 
-The next `d remote` run starts with discard-and-create, so leftover state
-from the prior run is cleaned up before any layout work.
+The next `d remote` run starts with discard-and-create, so even if the
+restore-side discard somehow leaves leftovers (BetterDisplay quirks,
+manual UI interference), the next remote cleans them up before creating
+a fresh virtual display.
 
 ## Why this shape, and not other things we tried
 

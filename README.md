@@ -118,18 +118,24 @@ When the `betterdisplay: connect-all-displays` directive is present,
    form is sometimes unreliable).
 4. Apply the `displayplacer` mirror layout.
 
-The matching `layouts/local.displayplacer` should keep the virtual display
-**enabled** but parked off-screen, e.g.:
+The matching `layouts/local.displayplacer` discards the virtual display so
+it disappears between sessions:
 
 ```txt
-displayplacer "id:s1879776955 res:3200x1800 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0" "id:s313775617 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(-10000,0) degree:0"
+# betterdisplay-discard: --type=VirtualScreen --name=ScreensRemote
+displayplacer "id:s1879776955 res:3200x1800 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0"
 ```
 
-Why off-screen instead of `enabled:false`: BetterDisplay's CLI for
+When the `betterdisplay-discard:` directive is present,
+`display-restore.sh` runs `betterdisplaycli discard <args>` after applying
+the displayplacer layout, looping until nothing matches (so any duplicate
+records get cleaned up in one pass).
+
+Why discard rather than disable (`enabled:false`): BetterDisplay's CLI for
 reconnecting a previously-disabled virtual display is unreliable, so disabling
-it on restore tends to produce the failure modes documented in
-[HANDOFF.md](HANDOFF.md). Each `d remote` run discards and recreates the
-virtual cleanly, so accumulation isn't a concern.
+on restore would put the next `d remote` on a brittle reconnect path. Discard
++ recreate is reliable; the next `d remote` creates a fresh virtual display
+from the `betterdisplay-create:` directive.
 
 ## Raycast
 

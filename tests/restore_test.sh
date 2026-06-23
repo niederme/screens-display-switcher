@@ -43,18 +43,22 @@ EOF
   # trailing command differs from the requested layout (1920x1080 vs
   # 3200x1800) so the script does not short-circuit as "already applied".
   cat >"$WORK/list_present.txt" <<'EOF'
+Persistent screen id: 61CFBB31-9AA0-466A-99CB-96BF2E04853E
 Serial screen id: s1879776955
 Type: 27 inch external screen
 Resolution: 1920x1080
+Scaling: on
 Enabled: true
 displayplacer "id:s1879776955 res:1920x1080 hz:60 color_depth:8 enabled:true scaling:on origin:(0,0) degree:0"
 EOF
 
   # `displayplacer list` output when only the virtual remains (physical gone).
   cat >"$WORK/list_absent.txt" <<'EOF'
+Persistent screen id: F700DBCB-D208-4ED4-B006-A083B845E2F7
 Serial screen id: s313775617
 Type: 24 inch external screen
 Resolution: 1920x1080
+Scaling: on
 Enabled: true
 displayplacer "id:954B67AB-688F-4BC2-87EB-C7D8409EA2ED res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(0,0) degree:0"
 EOF
@@ -97,6 +101,7 @@ EOF
 run_restore() {
   # Fast reconnect retries so the "absent" path doesn't sleep for real.
   PATH="$BIN:$PATH" RESTORE_RECONNECT_RETRIES=1 RESTORE_RECONNECT_WAIT=0 \
+    DISPLAY_SWITCHER_DIAG_DIR="$WORK/diagnostics" \
     bash "$RESTORE" "$LAYOUT" >"$WORK/stdout.txt" 2>"$WORK/stderr.txt"
   echo $?
 }
@@ -155,6 +160,37 @@ if [[ "$rc" -eq 0 ]] && grep -q 'res:3200x1800' "$CALL_LOG"; then
   ok "applied layout, exit 0"
 else
   fail "expected apply + exit 0 (rc=$rc); stderr: $(cat "$WORK/stderr.txt")"
+fi
+cleanup
+
+# ---------------------------------------------------------------------------
+echo "Test 5: already-restored serial-id layout is a true no-op"
+make_workspace present
+cp "$WORK/list_present.txt" "$WORK/list_active.txt"
+sed -i '' 's/Resolution: 1920x1080/Resolution: 3200x1800/' "$WORK/list_active.txt"
+rc="$(run_restore)"
+if [[ "$rc" -eq 0 ]] && grep -q 'Already at requested local display layout' "$WORK/stdout.txt"; then
+  ok "recognized equivalent serial-id layout"
+else
+  fail "expected semantic no-op detection (rc=$rc)"
+fi
+if grep -q 'res:3200x1800' "$CALL_LOG"; then
+  fail "should not apply displayplacer for an equivalent layout"
+else
+  ok "did not reapply an equivalent display mode"
+fi
+cleanup
+
+# ---------------------------------------------------------------------------
+echo "Test 6: invocation diagnostics are recorded"
+make_workspace present
+rc="$(run_restore)"
+if [[ -s "$WORK/diagnostics/events.log" ]] \
+  && grep -q 'action=restore' "$WORK/diagnostics/events.log" \
+  && grep -q 'phase=end' "$WORK/diagnostics/events.log"; then
+  ok "recorded restore begin/end diagnostics"
+else
+  fail "expected invocation diagnostics (rc=$rc)"
 fi
 cleanup
 

@@ -25,6 +25,22 @@ The reliable workflow is explicit:
 2. Connect with Screens.app.
 3. Run `d restore`, or run `scripts/display-restore.sh`, when done.
 
+Every remote/restore invocation is recorded in:
+
+```txt
+~/Library/Logs/screens-display-switcher/events.log
+```
+
+To capture current state plus recent macOS display/hot-plug logs:
+
+```sh
+./scripts/collect-diagnostics.sh       # last 60 minutes
+./scripts/collect-diagnostics.sh 180   # last 3 hours
+```
+
+Raycast also exposes `d diagnostics`. The resulting archive is written to the
+Desktop.
+
 The scripts use [`displayplacer`](https://github.com/jakehilborn/displayplacer)
 under the hood, plus optional [BetterDisplay](https://github.com/waydabber/BetterDisplay)
 support for layouts that involve a virtual display.
@@ -143,6 +159,7 @@ This repo includes Raycast Script Commands in `raycast/`:
 
 ```txt
 raycast/
+  raycast-display-diagnostics.sh
   raycast-display-remote.sh
   raycast-display-restore.sh
 ```

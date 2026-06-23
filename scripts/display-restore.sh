@@ -11,6 +11,9 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DEFAULT_LAYOUT="$ROOT_DIR/layouts/local.displayplacer"
 REMOTE_LAYOUT="$ROOT_DIR/layouts/remote.displayplacer"
 
+# shellcheck source=diagnostics-common.sh
+source "$SCRIPT_DIR/diagnostics-common.sh"
+
 read_layout_command() {
   awk '
     /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
@@ -54,6 +57,7 @@ EOF
   fi
 
   # shellcheck disable=SC2086
+  diagnostics_event "betterdisplay-discard" "$discard_args"
   while betterdisplaycli discard $discard_args >/dev/null 2>&1; do
     sleep 0.5
   done
@@ -77,6 +81,7 @@ displayplacer_has_id() {
 reconnect_displays() {
   local target_id="$1"
   command -v betterdisplaycli >/dev/null 2>&1 || return 0
+  diagnostics_event "betterdisplay-connect-all" "target=$target_id"
   betterdisplaycli perform --connectAllDisplays >/dev/null 2>&1 || true
   local retries="${RESTORE_RECONNECT_RETRIES:-5}"
   local wait_s="${RESTORE_RECONNECT_WAIT:-1}"
@@ -108,6 +113,8 @@ if [[ $# -gt 1 ]]; then
 fi
 
 layout_path="${1:-$DEFAULT_LAYOUT}"
+diagnostics_begin "restore" "$layout_path"
+trap 'exit_code=$?; diagnostics_finish "$exit_code"' EXIT
 
 if ! command -v displayplacer >/dev/null 2>&1; then
   cat >&2 <<'EOF'
@@ -157,6 +164,31 @@ esac
 
 target_id="$(layout_target_id "$command_line")"
 
+# Check the current physical-only state before touching BetterDisplay. Saved
+# layouts use serial IDs while `displayplacer list` emits a persistent UUID in
+# its command, so compare the meaningful fields rather than whole commands.
+current_list="$(displayplacer list)"
+target_resolution="$(sed -n -E 's/.* res:([^ ]+).*/\1/p' <<<"$command_line")"
+target_scaling="$(sed -n -E 's/.* scaling:([^ ]+).*/\1/p' <<<"$command_line")"
+current_resolution="$(awk '/^Resolution:/ { print $2; exit }' <<<"$current_list")"
+current_scaling="$(awk '/^Scaling:/ { print $2; exit }' <<<"$current_list")"
+current_enabled="$(awk '/^Enabled:/ { print $2; exit }' <<<"$current_list")"
+current_display_count="$(grep -c '^Persistent screen id:' <<<"$current_list" || true)"
+
+if [[ -n "$target_id" ]] \
+  && grep -q "Serial screen id: $target_id" <<<"$current_list" \
+  && [[ "$target_resolution" == "$current_resolution" ]] \
+  && [[ "$target_scaling" == "$current_scaling" ]] \
+  && [[ "$current_enabled" == "true" ]] \
+  && [[ "$current_display_count" -eq 1 ]]; then
+  cat <<EOF
+Already at requested local display layout.
+
+Layout: $layout_path
+EOF
+  exit 0
+fi
+
 # Tear down any leftover BetterDisplay virtual FIRST. A prior `d remote`
 # session can leave a virtual display as macOS's only "main" display; placing
 # the physical display while that phantom is present fails. Discarding up
@@ -188,16 +220,6 @@ EOF
   exit 1
 fi
 
-current_command="$(displayplacer list | awk '/^displayplacer / { command = $0 } END { print command }')"
-if [[ -n "$current_command" && "$command_line" == "$current_command" ]]; then
-  cat <<EOF
-Already at requested local display layout.
-
-Layout: $layout_path
-EOF
-  exit 0
-fi
-
 if [[ "$layout_path" == "$DEFAULT_LAYOUT" && -f "$REMOTE_LAYOUT" ]]; then
   remote_command="$(read_layout_command "$REMOTE_LAYOUT" || true)"
   if [[ -n "$remote_command" && "$command_line" == "$remote_command" ]]; then
@@ -215,6 +237,7 @@ EOF
 fi
 
 printf 'Applying local display layout from %s\n' "$layout_path"
+diagnostics_event "displayplacer-apply" "$command_line"
 if ! output="$(bash -c "$command_line" 2>&1)"; then
   printf '%s\n' "$output" >&2
 

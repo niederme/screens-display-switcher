@@ -8,6 +8,9 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DEFAULT_LAYOUT="$ROOT_DIR/layouts/remote.displayplacer"
 LOCAL_LAYOUT="$ROOT_DIR/layouts/local.displayplacer"
 
+# shellcheck source=diagnostics-common.sh
+source "$SCRIPT_DIR/diagnostics-common.sh"
+
 read_layout_command() {
   awk '
     /^[[:space:]]*#/ || /^[[:space:]]*$/ { next }
@@ -128,6 +131,8 @@ if [[ $# -gt 1 ]]; then
 fi
 
 layout_path="${1:-$DEFAULT_LAYOUT}"
+diagnostics_begin "remote" "$layout_path"
+trap 'exit_code=$?; diagnostics_finish "$exit_code"' EXIT
 
 if ! command -v displayplacer >/dev/null 2>&1; then
   cat >&2 <<'EOF'
@@ -194,6 +199,7 @@ EOF
   if [[ -n "$create_args" ]]; then
     virtual_name="$(grep -oE -- '--virtualScreenName=[^ ]+' <<<"$create_args" | head -n1 | sed 's/--virtualScreenName=//')"
     if [[ -n "$virtual_name" ]]; then
+      diagnostics_event "betterdisplay-discard" "name=$virtual_name"
       while betterdisplaycli discard --type=VirtualScreen --name="$virtual_name" >/dev/null 2>&1; do
         sleep 0.5
       done
@@ -201,6 +207,7 @@ EOF
   fi
 
   if [[ -n "$create_args" ]]; then
+    diagnostics_event "betterdisplay-create" "$create_args"
     # The create arguments come from the local layout file. They intentionally
     # use shell-style argument splitting so BetterDisplay receives each flag.
     # shellcheck disable=SC2086
@@ -209,6 +216,7 @@ EOF
   fi
 
   betterdisplaycli perform --connectAllDisplays >/dev/null 2>&1 || true
+  diagnostics_event "betterdisplay-connect-all" "completed"
   sleep 1
 
   current_list="$(displayplacer list)"
@@ -260,6 +268,7 @@ EOF
 fi
 
 printf 'Applying remote display layout from %s\n' "$layout_path"
+diagnostics_event "displayplacer-apply" "$command_line"
 if ! output="$(bash -c "$command_line" 2>&1)"; then
   printf '%s\n' "$output" >&2
 

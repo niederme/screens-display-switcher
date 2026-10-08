@@ -118,8 +118,8 @@ Add two comment directives to `layouts/remote.displayplacer`:
 
 ```txt
 # betterdisplay: connect-all-displays
-# betterdisplay-create: --type=VirtualScreen --virtualScreenName=ScreensRemote --virtualScreenSerial=313775617 --virtualScreenVendorNumber=2198 --virtualScreenModelNumber=10498 --aspectWidth=16 --aspectHeight=9 --resolutionList=1920x1080 --useResolutionList=on --virtualScreenHiDPI=on
-displayplacer "id:s313775617+s1879776955 res:1920x1080 hz:60 color_depth:4 enabled:true scaling:on origin:(0,0) degree:0"
+# betterdisplay-create: --type=VirtualScreen --virtualScreenName=ScreensRemote --virtualScreenSerial=313775617 --virtualScreenVendorNumber=2198 --virtualScreenModelNumber=10498 --aspectWidth=16 --aspectHeight=9 --resolutionList=1600x900 --useResolutionList=on --virtualScreenHiDPI=on
+displayplacer "id:s313775617+s1879776955 res:1600x900 hz:60 color_depth:4 enabled:true scaling:on origin:(0,0) degree:0"
 ```
 
 When the `betterdisplay: connect-all-displays` directive is present,
